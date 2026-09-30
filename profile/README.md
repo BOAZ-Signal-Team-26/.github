@@ -34,7 +34,7 @@ BOAZ Signal은 판매 중인 금융상품 설명서를 수집·분석해, 설명
 
 PR 규칙의 근거와 아직 정하지 않은 규칙(브랜치 이름, 커밋 메시지 형식 등)은 [팀 운영 규칙](https://github.com/BOAZ-Signal-Team-26/Project-Management/blob/main/docs/04-proposals.md)에 있습니다.
 
-> **모든 저장소는 공개 저장소입니다.** API 키, `.env`, 원본 PDF와 가공 데이터(`raw/`, `derived/`, `runs/`), 1MB를 넘는 파일은 커밋하지 않습니다. 저장소를 받은 뒤 커밋 전 검사를 한 번 설치합니다(`uv run pre-commit install`). 개발 환경 설정은 [signal-pipeline README](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/README.md)에 있습니다.
+> **모든 저장소는 공개 저장소입니다.** API 키, `.env`, 원본 PDF와 가공 데이터(`raw/`, `derived/`, `runs/`), 1MB를 넘는 파일은 커밋하지 않습니다. 저장소를 받은 뒤 커밋 전 검사를 한 번 설치합니다. signal-pipeline은 `uv sync && uv run pre-commit install`, 나머지 두 저장소는 `uvx pre-commit install`입니다. 개발 환경 설정은 [signal-pipeline README](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/README.md)에 있습니다.
 
 ## 산출물
 
