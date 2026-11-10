@@ -10,8 +10,8 @@ BOAZ Signal은 판매 중인 금융상품 설명서를 수집·분석해, 설명
 
 | 저장소 | 역할 | 처음 볼 문서 |
 |---|---|---|
-| [signal-pipeline](https://github.com/BOAZ-Signal-Team-26/signal-pipeline) | 데이터 설계, 원천 데이터 검증, 수집·파싱·채점·추출 코드(9월 30일 기준 폴더 구조만 준비) | [설계 문서 안내](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/docs/README.md) |
-| [signal-infra](https://github.com/BOAZ-Signal-Team-26/signal-infra) | 클라우드 리소스, 네트워크와 환경 설정, 배포 구성(클라우드 설계 승인 후 추가) | [인프라 범위](https://github.com/BOAZ-Signal-Team-26/signal-infra/blob/main/README.md) |
+| [signal-pipeline](https://github.com/BOAZ-Signal-Team-26/signal-pipeline) | 데이터 설계, 원천 데이터 검증, 수집·파싱·채점·추출 코드. DART 수집기, PDF 파싱과 절 분해, 로컬 PostgreSQL 적재를 구현했습니다. LLM 추출 모듈은 [PR #79](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/pull/79)에서 검토 중입니다. 채점 코드는 작성 중입니다. | [설계 문서 안내](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/docs/README.md) |
+| [signal-infra](https://github.com/BOAZ-Signal-Team-26/signal-infra) | 클라우드 리소스, 네트워크와 환경 설정, 배포 구성. AWS 데이터 저장 설계와 인프라 설계 문서를 [PR #28](https://github.com/BOAZ-Signal-Team-26/signal-infra/pull/28)에서 10월 19일에 병합했습니다. EC2·RDS·VPC 등 인프라 리소스는 아직 만들지 않았습니다. | [인프라 범위](https://github.com/BOAZ-Signal-Team-26/signal-infra/blob/main/README.md) |
 | [Project-Management](https://github.com/BOAZ-Signal-Team-26/Project-Management) | 일정, 작업 분해(WBS), 스프린트 계획, 팀 운영 규칙 | [프로젝트 안내](https://github.com/BOAZ-Signal-Team-26/Project-Management/blob/main/README.md) |
 
 읽는 순서는 맡은 일에 따라 다릅니다.
@@ -47,7 +47,7 @@ PR 규칙의 근거와 아직 정하지 않은 규칙(브랜치 이름, 커밋 �
 
 원천 데이터부터 채점 근거까지 추적할 수 있도록 데이터 구조를 설계하고, 수집·파싱 실패와 계산 불가 사유도 기록합니다.
 
-> 9월 30일 기준으로 데이터 설계와 원천 데이터 검증 단계입니다. 위 산출물은 개발 목표이며, 단계별 진행 상황은 [설계 문서 안내](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/docs/README.md)에 있습니다.
+> 11월 10일 기준으로 문서 504건의 LLM 필드 추출을 한 번 실행했습니다. 추출 결과 1,915건 가운데 46건(2.4%)은 실패했습니다. CDI(설명 난독성 지표) 원점수 채점 코드는 작성 중입니다. EC2·RDS 등 AWS 인프라는 아직 만들지 않았습니다. 위 산출물은 개발 목표입니다. 단계별 진행 상황은 [설계 문서 안내](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/docs/README.md)에 있습니다.
 
 ## 분석 범위
 
@@ -59,7 +59,7 @@ PR 규칙의 근거와 아직 정하지 않은 규칙(브랜치 이름, 커밋 �
 
 **CDI(설명 난독성 지표)** 는 값이 높을수록 설명이 어렵다는 뜻이며, 같은 상품군·같은 위험등급의 비교 집단 안에서 해석합니다. 채점은 설명서의 절 단위로 하고, 통계는 펀드 단위로 집계합니다.
 
-CDI는 아래 4축으로 구성합니다. 축별 변수와 산식, 배점은 검토 중입니다.
+CDI는 아래 4축으로 구성합니다. 결과는 두 부분으로 나눠 내고, 한 숫자로 합산하지 않습니다. 파트 A는 축 4 고지 충실도의 항목별 판정입니다. 파트 B는 축 1~3을 합친 읽기 난이도 점수입니다. 파일럿 전에는 축 1·2만 씁니다. 축별 변수와 산식은 정했습니다. 파트 B의 축 가중치와 스케일링 방법은 승인 전입니다.
 
 | CDI 4축 | 확인하려는 것 |
 |---|---|
@@ -70,7 +70,7 @@ CDI는 아래 4축으로 구성합니다. 축별 변수와 산식, 배점은 검
 
 검토 중인 항목은 다음과 같습니다.
 
-- 고지 충실도를 CDI에 합칠지, 별도 점수로 보고할지, 어떤 상품군에 적용할지
+- 고지 충실도(파트 A)의 분모와 적용 범위
 - 사람의 이해도 평가와 LLM 평가를 함께 쓰는 검증 방식
 - 분쟁·제재 자료를 검증과 사례 탐색에 활용하는 범위
 
@@ -100,6 +100,21 @@ flowchart LR
 | 금융감독원 | 제재·경영유의사항과 분쟁조정 사례의 검증·탐색 활용 검토 |
 
 수집 방식과 실측 근거는 [데이터 소스 수집 명세](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/main/docs/data-sources.md)에 있습니다.
+
+## 아키텍처
+
+이 그림은 AWS 설계안입니다. 11월 10일 기준으로 EC2·RDS·VPC 등 인프라 리소스는 아직 만들지 않았습니다. LLM 추출에 쓰는 Amazon Bedrock은 이미 사용하고 있습니다.
+
+![BOAZ Signal AWS 아키텍처 설계도. Airflow DAG가 EC2에서 수집부터 채점까지 실행합니다. 결과는 RDS PostgreSQL과 S3에 저장합니다. Streamlit 대시보드가 S3의 exports 폴더를 읽습니다.](images/architecture-v2.png)
+
+- **수집과 처리**: EC2(t4g.small) 한 대에서 Airflow DAG가 수집, 파싱, 적재, LLM 추출, 채점 순서로 실행합니다.
+- **서버 접근**: EC2는 외부에서 들어오는 연결을 받지 않습니다. 팀원은 SSM Session Manager로만 접속합니다.
+- **데이터 저장**: 원본 파일, 추출 텍스트, 실행 기록, 대시보드용 내보내기 파일은 S3에 저장합니다. 문서 정보, 추출 필드, 점수는 사설 서브넷(private subnet)의 RDS PostgreSQL에 저장합니다. EC2는 S3 게이트웨이 엔드포인트(gateway endpoint)를 거쳐 S3에 접속합니다.
+- **LLM 추출**: LLM 필드 추출은 Amazon Bedrock의 Nova 2 Lite 모델로 수행합니다.
+- **배포**: GitHub Actions가 OIDC 인증으로 AWS 역할을 맡습니다. 이후 AWS CodeDeploy로 EC2에 배포합니다. 저장된 접근 키를 쓰지 않습니다.
+- **대시보드**: Streamlit Community Cloud에서 실행합니다. 읽기 전용 IAM 키로 S3의 exports 폴더만 읽습니다.
+
+대시보드 연결 방식은 [데이터 저장 설계 문서](https://github.com/BOAZ-Signal-Team-26/signal-infra/blob/main/docs/storage-design.md) 3.9절의 권장안입니다. 아직 확정하지 않았습니다. 그림의 원본과 구성 설명은 [파이프라인 아키텍처 문서](https://github.com/BOAZ-Signal-Team-26/signal-pipeline/blob/dev/docs/architecture.md)에 있습니다.
 
 ## 팀
 
